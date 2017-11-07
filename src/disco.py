@@ -464,9 +464,8 @@ def getPerEventStats(burstyProbeDurations,burstyProbeDurationsOngoing,numProbesI
                 try:
                     addrv4 = probeInfo.probeIDToAddrv4Dict[pid]
                 except:
-                    pass
+                    continue
                 if addrv4 is not None:
-                    print(addrv4)
                     slash24vals = addrv4.split('.')
                     slash24 = slash24vals[0]+'.'+slash24vals[1]+'.'+slash24vals[2]+'.0/24'
                 probeIds.append({'probeID':pid,'slash24':slash24,'state':maxState,"start":infoDict["disconnect"],"end":infoDict["connect"]})
