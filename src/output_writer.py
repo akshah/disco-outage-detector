@@ -12,8 +12,6 @@ class outputWriter():
             exit(0)
         self.lock = threading.RLock()
         self.resultfilename = resultfilename
-        if os.path.exists(self.resultfilename):
-            os.remove(self.resultfilename)
 
     def write(self, val,output_format='custom', delimiter='|'):
         self.lock.acquire()
@@ -24,9 +22,13 @@ class outputWriter():
                     writer.writerow(val)
             elif output_format == 'fsdb':
                 with closing(open(self.resultfilename, 'a+')) as fp:
-                    probeInfoList = eval(str(val[5]))
+                    prefixes_seen =  set() # Some probes could be in the same /24, accounting for overlaps
+                    probeInfoList = eval(str(val[6]))
                     for pVal in probeInfoList:
-                        print(val[1], val[2], pVal['slash24'],sep='\t',file=fp)
+                        prefix_block = pVal['slash24']
+                        if prefix_block not in prefixes_seen:
+                            print(val[2], val[3], prefix_block,val[1],sep='\t',file=fp)
+                            prefixes_seen.add(prefix_block)
         except:
             traceback.print_exc()
         finally:

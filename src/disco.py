@@ -446,7 +446,7 @@ def haversine(lon1, lat1, lon2, lat2):
         print(lon1, lat1, lon2, lat2)
         traceback.print_exc()
 
-def getPerEventStats(burstyProbeDurations,burstyProbeDurationsOngoing,numProbesInUnit,output):
+def getPerEventStats(burstyProbeDurations,burstyProbeDurationsOngoing,numProbesInUnit,output,key):
     burstEventInfo=[]
     for id,inDict in burstyProbeDurations.items():
         startTimes=[]
@@ -454,26 +454,25 @@ def getPerEventStats(burstyProbeDurations,burstyProbeDurationsOngoing,numProbesI
         durations=[]
         probeIds=[]
         for pid,inDict2 in inDict.items():
+            try:
+                addrv4 = probeInfo.probeIDToAddrv4Dict[pid]
+            except:
+                continue
+            if addrv4 == 'None':
+                continue
             maxState=max(inDict2.keys())
             for infoDict in inDict2[maxState]:
                 startTimes.append(infoDict["disconnect"])
                 endTimes.append(infoDict["connect"])
                 durations.append(infoDict["duration"])
-                addrv4 = None
-                slash24 = None
-                try:
-                    addrv4 = probeInfo.probeIDToAddrv4Dict[pid]
-                except:
-                    continue
-                if addrv4 is not None:
-                    slash24vals = addrv4.split('.')
-                    slash24 = slash24vals[0]+'.'+slash24vals[1]+'.'+slash24vals[2]+'.0/24'
+                slash24vals = addrv4.split('.')
+                slash24 = slash24vals[0]+'.'+slash24vals[1]+'.'+slash24vals[2]+'.0/24'
                 probeIds.append({'probeID':pid,'slash24':slash24,'state':maxState,"start":infoDict["disconnect"],"end":infoDict["connect"]})
         startMedian=np.median(np.array(startTimes))
         endMedian=np.median(np.array(endTimes))
         durationMedian=np.median(np.array(durations))
         burstEventInfo.append([id,startMedian,endMedian,durationMedian,numProbesInUnit,probeIds])
-        output.write([id,startMedian,endMedian,durationMedian,numProbesInUnit,probeIds],output_format=output_format)
+        output.write([id,key,startMedian,endMedian,durationMedian,numProbesInUnit,probeIds],output_format=output_format)
 
     '''
     for id,inDict in burstyProbeDurationsOngoing.items():
@@ -673,7 +672,7 @@ def workerThread(threadType):
                             filesToEmail.append(output)
                         logging.info('Burst was seen, call made to events stats.')
                         burstEventInfo = getPerEventStats(burstyProbeDurations, burstyProbeDurationsOngoing,
-                                                          numProbesInUnit, output)
+                                                          numProbesInUnit, output, key)
 
             for iter in range(0, itrFromThread):
                 try:
